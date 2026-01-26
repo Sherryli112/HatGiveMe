@@ -56,7 +56,7 @@
     ```
 3. 於專案根目錄建立 .env 檔案，內容如下：
    ```env
-   DATABASE_URL="postgresql://admin:hat1234@postgres:5432/hatgiveme?schema=public"
+   DATABASE_URL="postgresql://admin:hat1234@localhost:5435/hatgiveme?schema=public"
    JWT_SECRET="fba87ec213d=@wop"
    API_KEY="hat1234"
    ```
