@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import { User, Prisma } from '@prisma/client';
-import * as bcrypt from 'bcrypt';
+import { comparePassword } from '../common/utils/password.util';
 
 type UserWithoutPassword = Omit<User, 'password'>;
 
@@ -18,7 +18,7 @@ export class AuthService {
     pass: string,
   ): Promise<UserWithoutPassword | null> {
     const user = await this.usersService.findByEmail(email);
-    if (user && (await bcrypt.compare(pass, user.password))) {
+    if (user && (await comparePassword(pass, user.password))) {
       const { password, ...result } = user;
       return result;
     }

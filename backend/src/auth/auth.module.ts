@@ -6,6 +6,7 @@ import { PassportModule } from '@nestjs/passport';
 import { JwtModule } from '@nestjs/jwt';
 import { JwtStrategy } from './jwt.strategy';
 import { ApiKeyGuard } from './api-key.guard';
+import { AdminGuard } from './admin.guard';
 
 @Global()
 @Module({
@@ -18,7 +19,7 @@ import { ApiKeyGuard } from './api-key.guard';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy, ApiKeyGuard],
-  exports: [AuthService, JwtModule],
+  providers: [AuthService, JwtStrategy, ApiKeyGuard, AdminGuard],
+  exports: [AuthService, JwtModule, AdminGuard],
 })
 export class AuthModule {}

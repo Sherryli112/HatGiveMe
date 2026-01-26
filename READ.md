@@ -40,8 +40,17 @@
     docker exec -it hatgiveme_backend sh
     ```
     4.2. 執行資料庫遷移 (Migration)
-     ```shell
+    ```shell
     npx prisma migrate dev --name init
+    ```
+5. 建立管理者帳號：
+    5.1. 確認 backend 內 .env 檔案 有以下資訊
+   ```env
+   ADMIN_EMAIL="admin@example.com"
+    ADMIN_PASSWORD="hat1234"
+   ```
+    ```shell
+    npx prisma db seed
     ```
 
 ### 手動部署 (Local) 

@@ -1,17 +1,16 @@
 import { IsEmail, IsString, MinLength, IsOptional } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Prisma } from '@prisma/client';
 
-export class RegisterDto implements Prisma.UserCreateInput {
+export class CreateAdminDto {
   @ApiProperty({
-    description: '使用者 email',
-    example: 'user@example.com',
+    description: '管理員 email',
+    example: 'admin@example.com',
   })
   @IsEmail({}, { message: '請輸入有效的 email' })
   email: string;
 
   @ApiProperty({
-    description: '使用者密碼',
+    description: '管理員密碼',
     example: 'securePassword123',
     minLength: 6,
   })
@@ -20,7 +19,7 @@ export class RegisterDto implements Prisma.UserCreateInput {
   password: string;
 
   @ApiPropertyOptional({
-    description: '使用者名稱（選填）',
+    description: '管理員名稱（選填）',
     example: '系統管理員',
   })
   @IsOptional()

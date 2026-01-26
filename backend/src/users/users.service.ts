@@ -1,19 +1,52 @@
-import { Injectable } from '@nestjs/common';
+import {
+  Injectable,
+  ConflictException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { Prisma, User, Role } from '@prisma/client';
-import * as bcrypt from 'bcrypt';
+import { hashPassword } from '../common/utils/password.util';
 
 @Injectable()
 export class UsersService {
-  constructor(private prisma: PrismaService) { }
+  constructor(private prisma: PrismaService) {}
 
   async create(data: Prisma.UserCreateInput): Promise<User> {
-    const salt = await bcrypt.genSalt();
-    const hashedPassword = await bcrypt.hash(data.password, salt);
+    // 一般使用者註冊
+    const hashedPassword = await hashPassword(data.password as string);
     return this.prisma.user.create({
       data: {
         ...data,
         password: hashedPassword,
+        role: 'USER', // 一般註冊只能是 USER
+      },
+    });
+  }
+
+  /**
+   * 由現有管理員建立新管理員帳號
+   * @param data 管理員資料
+   * @returns 建立的其他管理員使用者
+   */
+  async createAdmin(data: {
+    email: string;
+    password: string;
+    name?: string;
+  }): Promise<User> {
+    // 檢查 email 是否已存在
+    const existing = await this.findByEmail(data.email);
+    if (existing) {
+      throw new ConflictException('此 email 已被使用');
+    }
+
+    // 建立管理員帳號
+    const hashedPassword = await hashPassword(data.password);
+    return this.prisma.user.create({
+      data: {
+        email: data.email,
+        password: hashedPassword,
+        name: data.name || '管理員',
+        role: Role.ADMIN,
+        isActive: true,
       },
     });
   }
@@ -44,7 +77,7 @@ export class UsersService {
   // Find by email strictly
   async findByEmail(email: string): Promise<User | null> {
     return this.prisma.user.findUnique({
-      where: { email }
+      where: { email },
     });
   }
 
@@ -55,8 +88,7 @@ export class UsersService {
     const { where, data } = params;
     // Hash password if it's being updated
     if (typeof data.password === 'string') {
-      const salt = await bcrypt.genSalt();
-      data.password = await bcrypt.hash(data.password, salt);
+      data.password = await hashPassword(data.password);
     }
     return this.prisma.user.update({
       data,

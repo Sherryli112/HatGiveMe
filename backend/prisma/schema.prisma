@@ -7,12 +7,12 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum Role {
+enum Role { // 使用者角色(USER: 使用者, ADMIN: 管理員)
   USER
   ADMIN
 }
 
-enum OrderStatus {
+enum OrderStatus { // 訂單狀態(PENDING: 待付款, PAID: 已付款, SHIPPED: 已發貨, COMPLETED: 已完成, CANCELLED: 已取消)
   PENDING
   PAID
   SHIPPED
@@ -24,53 +24,53 @@ model User {
   id        Int      @id @default(autoincrement())
   email     String   @unique
   password  String
-  name      String?
-  role      Role     @default(USER)
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  orders    Order[]
+  name      String?                                 // 使用者名稱(暱稱)
+  role      Role     @default(USER)                 // 使用者角色(USER: 使用者, ADMIN: 管理員)
+  isActive  Boolean  @default(true)                 // 使用者是否啟用
+  createdAt DateTime @default(now())                // 使用者建立時間
+  orders    Order[]                                // 使用者訂單
 }
 
 model Category {
-  id       Int       @id @default(autoincrement())
-  name     String    @unique
-  products Product[]
+  id       Int       @id @default(autoincrement())  
+  name     String    @unique                        // 分類名稱
+  products Product[]                                // 分類商品
 }
 
 model Product {
   id          Int         @id @default(autoincrement())
-  name        String
-  description String
-  price       Decimal     @db.Decimal(10, 2)
-  stock       Int
-  images      String[]
-  isPublished Boolean     @default(true)
-  categoryId  Int
-  category    Category    @relation(fields: [categoryId], references: [id])
-  orderItems  OrderItem[]
-  createdAt   DateTime    @default(now())
+  name        String      // 商品名稱
+  description String      // 商品描述
+  price       Decimal     @db.Decimal(10, 2) // 商品價格
+  stock       Int         // 商品庫存
+  images      String[]    // 商品圖片
+  isPublished Boolean     @default(true)      // 商品是否上架
+  categoryId  Int         // 商品分類ID
+  category    Category    @relation(fields: [categoryId], references: [id]) // 商品分類
+  orderItems  OrderItem[] // 商品訂單項目
+  createdAt   DateTime    @default(now())     // 商品建立時間
   updatedAt   DateTime    @updatedAt
 }
 
 model Order {
   id              Int         @id @default(autoincrement())
-  userId          Int
+  userId          Int         // 訂單使用者ID
   user            User        @relation(fields: [userId], references: [id])
-  status          OrderStatus @default(PENDING)
-  totalAmount     Decimal     @db.Decimal(10, 2)
-  shippingAddress String
-  receiverName    String
-  receiverPhone   String
-  items           OrderItem[]
-  createdAt       DateTime    @default(now())
+  status          OrderStatus @default(PENDING) // 訂單狀態
+  totalAmount     Decimal     @db.Decimal(10, 2) // 訂單總金額
+  shippingAddress String      // 收貨地址
+  receiverName    String      // 收貨人姓名
+  receiverPhone   String      // 收貨人電話
+  items           OrderItem[] // 訂單項目
+  createdAt       DateTime    @default(now())    // 訂單建立時間
 }
 
 model OrderItem {
   id        Int     @id @default(autoincrement())
-  orderId   Int
+  orderId   Int         // 訂單ID
   order     Order   @relation(fields: [orderId], references: [id])
-  productId Int
+  productId Int         // 商品ID
   product   Product @relation(fields: [productId], references: [id])
-  quantity  Int
-  price     Decimal @db.Decimal(10, 2)
+  quantity  Int         // 商品數量
+  price     Decimal @db.Decimal(10, 2) // 商品單價
 }

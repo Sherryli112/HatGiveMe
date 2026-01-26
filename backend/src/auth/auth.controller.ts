@@ -6,7 +6,12 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
+import {
+  ApiOperation,
+  ApiSecurity,
+  ApiTags,
+  ApiResponse,
+} from '@nestjs/swagger';
 import { ApiKeyGuard } from './api-key.guard';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
@@ -19,7 +24,30 @@ export class AuthController {
   @Post('login')
   @UseGuards(ApiKeyGuard)
   @ApiSecurity('ApiKeyAuth')
-  @ApiOperation({ summary: 'User login' })
+  @ApiOperation({
+    summary: '使用者登入',
+    description: '使用 email 和密碼登入，成功後會回傳 JWT access_token',
+  })
+  @ApiResponse({
+    status: 200,
+    description: '登入成功',
+    schema: {
+      example: {
+        access_token:
+          'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFkbWluQGhhdGdpdmVtZS5jb20iLCJzdWIiOjEsInJvbGUiOiJBRE1JTiIsImlhdCI6MTYxNjIzOTAyMiwiZXhwIjoxNjE2MjQyNjIyfQ',
+        user: {
+          id: 1,
+          email: 'admin@hatgiveme.com',
+          name: '系統管理員',
+          role: 'ADMIN',
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 401,
+    description: '登入失敗：帳號或密碼錯誤',
+  })
   async login(@Body() body: LoginDto) {
     const user = await this.authService.validateUser(body.email, body.password);
     if (!user) {
@@ -29,7 +57,30 @@ export class AuthController {
   }
 
   @Post('register')
-  @ApiOperation({ summary: 'User registration' })
+  @ApiOperation({
+    summary: '使用者註冊',
+    description: '註冊新使用者帳號，註冊成功後會自動登入並回傳 JWT access_token',
+  })
+  @ApiResponse({
+    status: 201,
+    description: '註冊成功',
+    schema: {
+      example: {
+        access_token:
+          'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InVzZXJAZXhhbXBsZS5jb20iLCJzdWIiOjIsInJvbGUiOiJVU0VSIiwiaWF0IjoxNjE2MjM5MDIyLCJleHAiOjE2MTYyNDI2MjJ9',
+        user: {
+          id: 2,
+          email: 'user@example.com',
+          name: '系統管理員',
+          role: 'USER',
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 409,
+    description: '註冊失敗：Email 已被使用',
+  })
   async register(@Body() body: RegisterDto) {
     // Ideally validation logic here
     const user = await this.authService.register(body);
