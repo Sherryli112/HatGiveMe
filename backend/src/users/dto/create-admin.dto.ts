@@ -11,7 +11,7 @@ export class CreateAdminDto {
 
   @ApiProperty({
     description: '管理員密碼',
-    example: 'securePassword123',
+    example: 'password',
     minLength: 6,
   })
   @IsString({ message: '密碼必須是字串' })

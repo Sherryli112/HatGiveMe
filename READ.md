@@ -46,7 +46,7 @@
 5. 建立管理者帳號：
     5.1. 確認 backend 內 .env 檔案 有以下資訊
    ```env
-   ADMIN_EMAIL="admin@example.com"
+    ADMIN_EMAIL="admin@example.com"
     ADMIN_PASSWORD="hat1234"
    ```
     ```shell

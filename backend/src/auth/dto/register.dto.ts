@@ -12,7 +12,7 @@ export class RegisterDto implements Prisma.UserCreateInput {
 
   @ApiProperty({
     description: '使用者密碼',
-    example: 'securePassword123',
+    example: 'password',
     minLength: 6,
   })
   @IsString({ message: '密碼必須是字串' })
@@ -21,7 +21,7 @@ export class RegisterDto implements Prisma.UserCreateInput {
 
   @ApiPropertyOptional({
     description: '使用者名稱（選填）',
-    example: '系統管理員',
+    example: '王大明',
   })
   @IsOptional()
   @IsString({ message: '名稱必須是字串' })
