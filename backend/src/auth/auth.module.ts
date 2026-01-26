@@ -21,4 +21,4 @@ import { ApiKeyGuard } from './api-key.guard';
   providers: [AuthService, JwtStrategy, ApiKeyGuard],
   exports: [AuthService, JwtModule],
 })
-export class AuthModule { }
+export class AuthModule {}
