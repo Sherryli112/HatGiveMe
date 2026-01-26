@@ -1,19 +1,18 @@
-import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
-import { Observable } from 'rxjs';
+import { Injectable, CanActivate, ExecutionContext, UnauthorizedException } from '@nestjs/common';
 
 @Injectable()
 export class ApiKeyGuard implements CanActivate {
-  canActivate(
-    context: ExecutionContext,
-  ): boolean | Promise<boolean> | Observable<boolean> {
+  canActivate(context: ExecutionContext): boolean {
     const request = context.switchToHttp().getRequest();
-    
     const apiKey = request.headers['x-api-key'];
-    
-    const validApiKey = process.env.API_KEY;
+    const expectedApiKey = process.env.API_KEY;
 
-    if (!apiKey || apiKey !== validApiKey) {
-      throw new UnauthorizedException('Invalid API Key');
+    if (!expectedApiKey) {
+      throw new UnauthorizedException('API_KEY not configured on server');
+    }
+
+    if (!apiKey || apiKey !== expectedApiKey) {
+      throw new UnauthorizedException('Invalid API key');
     }
 
     return true;
