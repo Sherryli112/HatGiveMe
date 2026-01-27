@@ -3,6 +3,7 @@ import {
   ConflictException,
   BadRequestException,
   ForbiddenException,
+  NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { Prisma, User, Role } from '@prisma/client';
@@ -116,7 +117,7 @@ export class UsersService {
   ): Promise<User> {
     const targetUser = await this.findOne({ id: userId });
     if (!targetUser) {
-      throw new BadRequestException('使用者不存在');
+      throw new NotFoundException('使用者不存在');
     }
 
     // 不能停用自己
@@ -162,7 +163,7 @@ export class UsersService {
   async activateUser(userId: number): Promise<User> {
     const user = await this.findOne({ id: userId });
     if (!user) {
-      throw new BadRequestException('使用者不存在');
+      throw new NotFoundException('使用者不存在');
     }
 
     return this.update({

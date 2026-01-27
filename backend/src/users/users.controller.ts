@@ -3,11 +3,14 @@ import {
   Controller,
   Get,
   Param,
+  ParseIntPipe,
   Patch,
   Post,
   Delete,
   Req,
+  UnauthorizedException,
   UseGuards,
+  NotFoundException,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import {
@@ -19,22 +22,42 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 import { AdminGuard } from '../auth/admin.guard';
 import { CreateAdminDto } from './dto/create-admin.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
+import { UpdateUserStatusDto } from './dto/update-user-status.dto';
 
 @ApiTags('users')
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) { }
 
-  // Placeholder for "Get My Profile" - needs Auth
   @Get('profile')
   @UseGuards(AuthGuard('jwt'))
   @ApiBearerAuth('AccessTokenAuth')
   @ApiOperation({ summary: '取得目前使用者資料' })
+  @ApiResponse({
+    status: 200,
+    description: '成功取得目前使用者資料',
+    schema: {
+      example: {
+        id: 1,
+        email: 'user@example.com',
+        name: '王大明',
+        role: 'USER',
+        isActive: true,
+        createdAt: '2025-01-01T00:00:00.000Z',
+      },
+    },
+  })
+  @ApiResponse({ status: 401, description: '未登入或 token 無效' })
+  @ApiResponse({ status: 404, description: '使用者不存在或已停用' })
   async getProfile(@Req() req: any) {
-    const userId = req.user?.sub || req.user?.userId;
+    const userId = req.user?.sub ?? req.user?.userId;
     const user = await this.usersService.findOne({ id: userId });
     if (!user) {
-      return { message: '使用者不存在' };
+      throw new NotFoundException('使用者不存在');
+    }
+    if (!user.isActive) {
+      throw new NotFoundException('帳號已停用');
     }
     const { password, ...userWithoutPassword } = user;
     return userWithoutPassword;
@@ -44,11 +67,27 @@ export class UsersController {
   @UseGuards(AuthGuard('jwt'))
   @ApiBearerAuth('AccessTokenAuth')
   @ApiOperation({ summary: '更新目前使用者資料' })
+  @ApiResponse({
+    status: 200,
+    description: '更新成功',
+    schema: {
+      example: {
+        id: 1,
+        email: 'user@example.com',
+        name: '王大明',
+        role: 'USER',
+        isActive: true,
+        createdAt: '2025-01-01T00:00:00.000Z',
+      },
+    },
+  })
+  @ApiResponse({ status: 400, description: '驗證失敗' })
+  @ApiResponse({ status: 401, description: '未登入或 token 無效' })
   async updateProfile(
     @Req() req: any,
-    @Body() data: { name?: string },
+    @Body() data: UpdateProfileDto,
   ) {
-    const userId = req.user?.sub || req.user?.userId;
+    const userId = req.user?.sub ?? req.user?.userId;
     const user = await this.usersService.update({
       where: { id: userId },
       data,
@@ -63,7 +102,7 @@ export class UsersController {
   @ApiBearerAuth('AccessTokenAuth')
   @ApiOperation({
     summary: '停用自己的帳號',
-    description: '使用者可以停用自己的帳號（軟刪除）',
+    description: '使用者可以停用自己的帳號',
   })
   @ApiResponse({
     status: 200,
@@ -137,7 +176,7 @@ export class UsersController {
   @ApiBearerAuth('AccessTokenAuth')
   @ApiOperation({
     summary: 'Admin: 啟用/停用使用者帳號',
-    description: '管理員可以啟用或停用其他使用者的帳號（軟刪除）',
+    description: '管理員可以啟用或停用其他使用者的帳號',
   })
   @ApiResponse({
     status: 200,
@@ -145,30 +184,35 @@ export class UsersController {
   })
   @ApiResponse({
     status: 400,
-    description: '無法停用：不能停用自己、主要管理員，或系統至少需要保留一個啟用的管理員',
+    description: '無法停用：不能停用自己、主要管理員，或系統至少需要保留一個啟用的管理員；或請求體驗證失敗',
   })
   @ApiResponse({
     status: 403,
     description: '僅管理員可執行此操作',
   })
+  @ApiResponse({
+    status: 404,
+    description: '使用者不存在',
+  })
   async updateStatus(
     @Req() req: any,
-    @Param('id') id: string,
-    @Body() data: { isActive: boolean },
+    @Param('id', ParseIntPipe) id: number,
+    @Body() data: UpdateUserStatusDto,
   ) {
-    const currentUserId = req.user?.sub || req.user?.userId;
+    const currentUserId = req.user?.sub ?? req.user?.userId;
+    if (currentUserId === undefined) {
+      throw new UnauthorizedException('無法取得使用者資訊');
+    }
 
     if (data.isActive) {
-      // 啟用帳號
-      const user = await this.usersService.activateUser(+id);
+      const user = await this.usersService.activateUser(id);
       const { password, ...userWithoutPassword } = user;
       return {
         message: '帳號已啟用',
         user: userWithoutPassword,
       };
     } else {
-      // 停用帳號（使用保護機制）
-      const user = await this.usersService.deactivateUser(+id, currentUserId);
+      const user = await this.usersService.deactivateUser(id, currentUserId);
       const { password, ...userWithoutPassword } = user;
       return {
         message: '帳號已停用',
