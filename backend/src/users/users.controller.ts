@@ -126,7 +126,7 @@ export class UsersController {
   @Get()
   @UseGuards(AuthGuard('jwt'), AdminGuard)
   @ApiBearerAuth('AccessTokenAuth')
-  @ApiOperation({ summary: 'Admin: 取得所有使用者列表' })
+  @ApiOperation({ summary: '取得所有使用者列表【管理員】' })
   @ApiResponse({
     status: 200,
     description: '取得使用者列表成功',
@@ -147,7 +147,7 @@ export class UsersController {
   @Post('admin')
   @UseGuards(AuthGuard('jwt'), AdminGuard)
   @ApiBearerAuth('AccessTokenAuth')
-  @ApiOperation({ summary: 'Admin: 建立新管理員帳號' })
+  @ApiOperation({ summary: '建立新管理員帳號【管理員】' })
   @ApiResponse({
     status: 201,
     description: '管理員帳號建立成功',
@@ -175,7 +175,7 @@ export class UsersController {
   @UseGuards(AuthGuard('jwt'), AdminGuard)
   @ApiBearerAuth('AccessTokenAuth')
   @ApiOperation({
-    summary: 'Admin: 啟用/停用使用者帳號',
+    summary: '啟用/停用使用者帳號【管理員】',
     description: '管理員可以啟用或停用其他使用者的帳號',
   })
   @ApiResponse({
