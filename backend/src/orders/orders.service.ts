@@ -1,4 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { Prisma, Order, OrderStatus } from '@prisma/client';
 
@@ -6,23 +10,30 @@ import { Prisma, Order, OrderStatus } from '@prisma/client';
 export class OrdersService {
   constructor(private prisma: PrismaService) { }
 
-  async create(userId: number, data: {
-    items: { productId: number; quantity: number }[];
-    shippingAddress: string;
-    receiverName: string;
-    receiverPhone: string;
-  }): Promise<Order> {
+  async create(
+    userId: number,
+    data: {
+      items: { productId: number; quantity: number }[];
+      shippingAddress: string;
+      receiverName: string;
+      receiverPhone: string;
+    },
+  ): Promise<Order> {
     const { items, ...orderData } = data;
 
-    // Calculate total amount and verify stock (simplified for now, ideally strictly check stock)
     let totalAmount = 0;
     const orderItemsData: Prisma.OrderItemCreateWithoutOrderInput[] = [];
 
-    // Fetch product prices to calculate total
     for (const item of items) {
-      const product = await this.prisma.product.findUnique({ where: { id: item.productId } });
-      if (!product) throw new Error(`Product ${item.productId} not found`);
-      if (product.stock < item.quantity) throw new Error(`Product ${product.name} out of stock`);
+      const product = await this.prisma.product.findUnique({
+        where: { id: item.productId },
+      });
+      if (!product) {
+        throw new NotFoundException(`商品 ID ${item.productId} 不存在`);
+      }
+      if (product.stock < item.quantity) {
+        throw new BadRequestException(`商品「${product.name}」庫存不足`);
+      }
 
       const itemTotal = Number(product.price) * item.quantity;
       totalAmount += itemTotal;
@@ -30,7 +41,7 @@ export class OrdersService {
       orderItemsData.push({
         product: { connect: { id: item.productId } },
         quantity: item.quantity,
-        price: product.price
+        price: product.price,
       });
     }
 
@@ -42,12 +53,12 @@ export class OrdersService {
         receiverName: orderData.receiverName,
         receiverPhone: orderData.receiverPhone,
         items: {
-          create: orderItemsData
-        }
+          create: orderItemsData,
+        },
       },
       include: {
-        items: true
-      }
+        items: true,
+      },
     });
   }
 
@@ -76,9 +87,13 @@ export class OrdersService {
   }
 
   async updateStatus(id: number, status: OrderStatus) {
+    const order = await this.prisma.order.findUnique({ where: { id } });
+    if (!order) {
+      throw new NotFoundException('訂單不存在');
+    }
     return this.prisma.order.update({
       where: { id },
-      data: { status }
+      data: { status },
     });
   }
 }
